@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurtuluş Yolu - Tarihi Oyun</title>
+    <style>
+        /* ===== GENEL AYARLAR ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #1a1a2e;
+            color: #f5f1e8;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Eski harita arka planı efekti */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px),
+                repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px);
+            background-attachment: fixed;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Container ana */
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ===== ANA MENÜ STILI ===== */
+        .menu-screen {
+            background: linear-gradient(135deg, #d32f2f 0%, #8b0000 50%, #1a1a2e 100%);
+            border: 8px solid #f5f1e8;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(211, 47, 47, 0.3);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .menu-screen h1 {
+            font-size: 4em;
+            color: #f5f1e8;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8), 2px 2px 4px rgba(211, 47, 47, 0.6);
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            font-weight: bold;
+        }
+
+        .menu-screen p {
+            font-size: 1.3em;
+            color: #f5f1e8;
+            margin-bottom: 50px;
+            line-height: 1.8;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .menu-description {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-left: 4px solid #c9a961;
+            margin-bottom: 40px;
+            font-style: italic;
+            color: #f5f1e8;
+            border-radius: 5px;
+        }
+
+        /* ===== BUTON STİLLERİ ===== */
+        button {
+            background: linear-gradient(135deg, #c9a961 0%, #a68a4f 100%);
+            color: #1a1a2e;
+            border: 3px solid #f5f1e8;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            font-family: 'Georgia', serif;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #d4b574 0%, #b8965d 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ===== BÖLÜM EKRANI ===== */
+        .game-screen {
+            background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 100%);
+            border: 8px solid #4a4a5e;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(74, 74, 94, 0.2);
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Üst bilgi çubuğu */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #d32f2f;
+        }
+
+        .game-title {
+            font-size: 1.8em;
+            color: #d32f2f;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #4a4a5e;
+        }
+
+        /* Kalp simgesi */
+        .heart {
+            color: #d32f2f;
+            font-size: 1.4em;
+        }
+
+        /* Yıldız simgesi */
+        .star {
+            color: #c9a961;
+            font-size: 1.4em;
+        }
+
+        /* Bölüm başlığı */
+        .chapter-title {
+            font-size: 2.2em;
+            color: #d32f2f;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            letter-spacing: 1px;
+        }
+
+        /* Bölüm numarası */
+        .chapter-number {
+            text-align: center;
+            color: #4a4a5e;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* Bilgi metni */
+        .chapter-info {
+            background-color: rgba(211, 47, 47, 0.08);
+            border-left: 5px solid #d32f2f;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            color: #1a1a2e;
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+
+        /* Soru */
+        .question {
+            background-color: rgba(74, 74, 94, 0.1);
+            border-left: 5px solid #4a4a5e;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+            color: #1a1a2e;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        /* Cevap seçenekleri */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f1e8 100%);
+            color: #1a1a2e;
+            border: 3px solid #4a4a5e;
+            padding: 15px 20px;
+            font-size: 1em;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-btn:hover {
+            background: linear-gradient(135deg, #f9f7f3 0%, #f5f1e8 100%);
+            border-color: #d32f2f;
+            transform: translateX(10px);
+            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.2);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* Doğru cevap */
+        .option-btn.correct {
+            background-color: #4caf50;
+            color: white;
+            border-color: #2e7d32;
+        }
+
+        /* Yanlış cevap */
+        .option-btn.incorrect {
+            background-color: #d32f2f;
+            color: white;
+            border-color: #8b0000;
+        }
+
+        /* Devam butonu */
+        .continue-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+
+        /* ===== FINAL EKRANI ===== */
+        .final-screen {
+            background: linear-gradient(135deg, #d32f2f 0%, #8b0000 50%, #1a1a2e 100%);
+            border: 8px solid #f5f1e8;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(211, 47, 47, 0.3);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .final-screen h2 {
+            font-size: 2.5em;
+            color: #f5f1e8;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+        }
+
+        .final-message {
+            font-size: 1.5em;
+            color: #c9a961;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+            font-weight: bold;
+        }
+
+        .final-stats {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid #c9a961;
+        }
+
+        .final-stat-item {
+            font-size: 1.3em;
+            color: #f5f1e8;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .title-display {
+            font-size: 1.8em;
+            color: #ffd700;
+            margin: 20px 0;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .replay-btn {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* ===== GİZLİ EKRANLAR ===== */
+        .hidden {
+            display: none;
+        }
+
+        /* ===== SCROLLBAR STİLİ ===== */
+        .game-screen::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .game-screen::-webkit-scrollbar-track {
+            background: #e8dcc8;
+            border-radius: 10px;
+        }
+
+        .game-screen::-webkit-scrollbar-thumb {
+            background: #c9a961;
+            border-radius: 10px;
+        }
+
+        .game-screen::-webkit-scrollbar-thumb:hover {
+            background: #a68a4f;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .menu-screen h1 {
+                font-size: 2.5em;
+            }
+
+            .chapter-title {
+                font-size: 1.8em;
+            }
+
+            .game-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .game-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ANA MENÜ EKRANI -->
+    <div class="container">
+        <div id="menuScreen" class="menu-screen">
+            <h1>⚔️ KURTULUŞ YOLU ⚔️</h1>
+            <p>Türkiye Cumhuriyeti'nin Kurtuluş Savaşı'ndaki önemli anlarını yaşayın!</p>
+            <div class="menu-description">
+                1919-1923 yılları arasında yaşanan Kurtuluş Savaşı'nın kritik dönemlerinde doğru kararlar vererek Cumhuriyete giden yolu tamamlayın. Her soruyu doğru cevaplayarak puan kazanın, ama dikkat! Yanlış cevaplar canınızı azaltacak!
+            </div>
+            <button onclick="startGame()">OYUNU BAŞLAT</button>
+        </div>
+
+        <!-- OYUN EKRANI -->
+        <div id="gameScreen" class="game-screen hidden">
+            <!-- Üst bilgi çubuğu: Bölüm adı, puan ve can -->
+            <div class="game-header">
+                <div class="game-title" id="currentChapter">Bölüm 1</div>
+                <div class="game-stats">
+                    <div class="stat">
+                        <span class="star">⭐</span>
+                        <span>Puan: <span id="scoreDisplay">0</span></span>
+                    </div>
+                    <div class="stat">
+                        <span class="heart">❤️</span>
+                        <span>Can: <span id="healthDisplay">3</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bölüm içeriği -->
+            <div id="chapterContent">
+                <!-- JavaScript tarafından doldurulacak -->
+            </div>
+        </div>
+
+        <!-- FINAL EKRANI -->
+        <div id="finalScreen" class="final-screen hidden">
+            <h2>🎉 OYUN BİTTİ 🎉</h2>
+            <div class="final-message" id="finalMessage">Tebrikler!</div>
+            <div class="final-stats">
+                <div class="final-stat-item">Son Puanınız: <strong id="finalScore">0</strong></div>
+                <div class="final-stat-item">Kalan Canınız: <strong id="finalHealth">0</strong></div>
+                <div class="title-display" id="titleDisplay">Cumhuriyet Kahramanı</div>
+            </div>
+            <button class="replay-btn" onclick="location.reload()">TEKRAR OYNA</button>
+        </div>
+    </div>
+
+    <script>
+        /* ===== OYUN AYARLARI VE VERİLER ===== */
+
+        // Bölüm bilgileri - Her bölüm için tarihsel bilgi ve soru-cevap
+        const chapters = [
+            {
+                id: 1,
+                name: "Samsun'a Çıkış",
+                subtitle: "Bölüm 1/7",
+                info: "19 Mayıs 1919'de Mustafa Kemal, Samsun'a çıkmıştır. Bu hareket, Kurtuluş Savaşı'nın başlangıcı olmuştur. Mebus seçiminin kısıtlanması ve İşgal Hükümeti'nin baskısından kurtuluş için bu önemli adım atılmıştır.",
+                question: "Mustafa Kemal Samsun'a ne amaçla çıkmıştır?",
+                options: [
+                    "Tatil yapmak için",
+                    "Türk Kurtuluş Savaşı'nı başlatmak ve millî mücadelele örgütlemek için",
+                    "Tüccar olarak iş yapmak için"
+                ],
+                correctAnswer: 1 // İkinci seçenek (0-indexed)
+            },
+            {
+                id: 2,
+                name: "Erzurum Kongresi",
+                subtitle: "Bölüm 2/7",
+                info: "23 Temmuz 1919'de Erzurum'da yapılan kongre, Türk millî mücadelesinin ilk örgütlü girişimidir. Anadolu'dan gelen temsilciler, İşgal Hükümeti'ne karşı birleşmiş muhalefet göstermişlerdir.",
+                question: "Erzurum Kongresi hangi tarihlerde yapılmıştır?",
+                options: [
+                    "Haziran - Temmuz 1919",
+                    "23 Temmuz - 7 Ağustos 1919",
+                    "Eylül - Ekim 1919"
+                ],
+                correctAnswer: 1
+            },
+            {
+                id: 3,
+                name: "Sivas Kongresi",
+                subtitle: "Bölüm 3/7",
+                info: "4-11 Eylül 1919'de Sivas Kongresi, Erzurum Kongresi'nin devamı niteliğindedir. Mustafa Kemal'in başkanlığında, Anadolu'nun tamamından temsilciler katılmıştır. Bu kongre ile millî mücadele, resmi olarak örgütlenmiştir.",
+                question: "Sivas Kongresi'nin başkanı kimdir?",
+                options: [
+                    "İsmet Paşa",
+                    "Rauf Bey",
+                    "Mustafa Kemal"
+                ],
+                correctAnswer: 2
+            },
+            {
+                id: 4,
+                name: "TBMM'nin Açılışı",
+                subtitle: "Bölüm 4/7",
+                info: "23 Nisan 1920'de Ankara'da Türkiye Büyük Millet Meclisi (TBMM) açılmıştır. Bu, meşru bir devlet organının kurulması anlamına gelmiştir. Osmanlı İmparatorluğu'na karşı yasal bir başkaldırı olmuştur.",
+                question: "TBMM hangi tarihte Ankara'da açılmıştır?",
+                options: [
+                    "23 Nisan 1919",
+                    "23 Nisan 1920",
+                    "23 Nisan 1921"
+                ],
+                correctAnswer: 1
+            },
+            {
+                id: 5,
+                name: "Sakarya Meydan Muharebesi",
+                subtitle: "Bölüm 5/7",
+                info: "Ağustos-Eylül 1921'de Sakarya Nehrinin batı ve doğusunda, Yunan Ordusu ile Türk Ordusu arasında şiddetli çarpışmalar yaşanmıştır. Bu muharebe, Türk Ordusu'nun en güçlü zaferidir ve Kurtuluş Savaşı'nın dönüm noktasıdır.",
+                question: "Sakarya Meydan Muharebesi ne zaman yapılmıştır?",
+                options: [
+                    "Haziran 1920",
+                    "Ağustos-Eylül 1921",
+                    "Aralık 1922"
+                ],
+                correctAnswer: 1
+            },
+            {
+                id: 6,
+                name: "Büyük Taarruz",
+                subtitle: "Bölüm 6/7",
+                info: "26 Ağustos 1922'de Başkomutan Mustafa Kemal tarafından emredilen Büyük Taarruz (8 Günlük Savaş), Yunan Ordusu'nun tamamen yenilgiye uğratılmasıyla sonuçlanmıştır. Türk tarafından muharebede 200 binden fazla Yunan askerinin esir alınması, bu operasyonun başarısını göstermektedir.",
+                question: "Büyük Taarruz ne zaman başlamıştır?",
+                options: [
+                    "26 Ağustos 1922",
+                    "26 Ağustos 1921",
+                    "26 Haziran 1922"
+                ],
+                correctAnswer: 0
+            },
+            {
+                id: 7,
+                name: "Cumhuriyetin İlanı",
+                subtitle: "Bölüm 7/7",
+                info: "29 Ekim 1923'de, TBMM tarafından Osmanlı İmparatorluğu'nun kaldırılması oylanmıştır ve Türkiye Cumhuriyeti resmen ilan edilmiştir. Mustafa Kemal de Cumhuriyet'in ilk Cumhurbaşkanı olarak seçilmiştir. Bu, Kurtuluş Savaşı'nın son ve en önemli aşamasıdır.",
+                question: "Cumhuriyet kaç tarihte ilan edilmiştir?",
+                options: [
+                    "29 Ekim 1922",
+                    "23 Nisan 1923",
+                    "29 Ekim 1923"
+                ],
+                correctAnswer: 2
+            }
+        ];
+
+        /* ===== OYUN DURUM VERİLERİ ===== */
+        let gameState = {
+            currentChapter: 0,      // Şu an hangi bölüm
+            score: 0,               // Toplam puan
+            health: 3,              // Kalan can
+            answering: false,       // Soru cevaplanıyor mu
+            gameOver: false         // Oyun bitti mi
+        };
+
+        /* ===== OYUN BAŞLATMA ===== */
+        function startGame() {
+            // Menü ekranını gizle
+            document.getElementById('menuScreen').classList.add('hidden');
+            
+            // Oyun ekranını göster
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            // Oyun durumunu sıfırla
+            gameState = {
+                currentChapter: 0,
+                score: 0,
+                health: 3,
+                answering: false,
+                gameOver: false
+            };
+            
+            // İlk bölümü yükle
+            loadChapter();
+        }
+
+        /* ===== BÖLÜM YÜKLEME ===== */
+        function loadChapter() {
+            // Oyun bitmiş mi kontrol et
+            if (gameState.currentChapter >= chapters.length || gameState.health <= 0) {
+                endGame();
+                return;
+            }
+
+            const chapter = chapters[gameState.currentChapter];
+
+            // Bölüm başlığını güncelle
+            document.getElementById('currentChapter').textContent = chapter.name;
+
+            // Puan ve can gösterimini güncelle
+            document.getElementById('scoreDisplay').textContent = gameState.score;
+            document.getElementById('healthDisplay').textContent = gameState.health;
+
+            // Bölüm içeriğini oluştur
+            let content = `
+                <div class="chapter-number">${chapter.subtitle}</div>
+                <h3 class="chapter-title">${chapter.name}</h3>
+                <div class="chapter-info">
+                    ${chapter.info}
+                </div>
+                <div class="question">
+                    <strong>❓ ${chapter.question}</strong>
+                </div>
+                <div class="options">
+            `;
+
+            // Cevap seçeneklerini ekle
+            chapter.options.forEach((option, index) => {
+                content += `
+                    <button class="option-btn" onclick="answerQuestion(${index})" ${gameState.answering ? 'disabled' : ''}>
+                        ${String.fromCharCode(65 + index)}. ${option}
+                    </button>
+                `;
+            });
+
+            content += `</div>`;
+
+            // İçeriği DOM'a ekle
+            document.getElementById('chapterContent').innerHTML = content;
+        }
+
+        /* ===== SORU CEVAPLANMASI ===== */
+        function answerQuestion(selectedAnswer) {
+            // Çoklu tıklama preventu
+            if (gameState.answering) return;
+            gameState.answering = true;
+
+            const chapter = chapters[gameState.currentChapter];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            // Tüm butonları devre dışı bırak
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Seçilen cevap doğru mu kontrol et
+            const isCorrect = selectedAnswer === chapter.correctAnswer;
+
+            // Seçilen cevabı göster
+            buttons[selectedAnswer].classList.add(isCorrect ? 'correct' : 'incorrect');
+            
+            // Doğru cevabı vurgula (yanlış cevap verilirse)
+            if (!isCorrect) {
+                buttons[chapter.correctAnswer].classList.add('correct');
+                gameState.health--; // Can azalt
+            } else {
+                gameState.score += 10; // Puan ekle
+            }
+
+            // 2 saniye sonra sonraki bölüme geç
+            setTimeout(() => {
+                gameState.currentChapter++;
+                gameState.answering = false;
+                loadChapter();
+            }, 2000);
+        }
+
+        /* ===== OYUN BİTİŞİ ===== */
+        function endGame() {
+            // Oyun ekranını gizle
+            document.getElementById('gameScreen').classList.add('hidden');
+
+            // Final ekranını göster
+            document.getElementById('finalScreen').classList.remove('hidden');
+
+            // Final mesajı ve unvanı belirle
+            let message = "";
+            let title = "";
+
+            if (gameState.health > 0) {
+                // Oyun başarıyla tamamlandı
+                message = "Tebrikler! Kurtuluş Yolunu başarıyla tamamladınız!";
+                title = "🏆 CUMHURIYET KAHRAMAN 🏆";
+                gameState.score += gameState.health * 5; // Kalan canlar için bonus
+            } else {
+                // Oyunun sonu
+                message = "Maalesef! Yolun sonuna gelemediğiniz için yapabileceğiniz bir şey yok.";
+                title = "Yeniden Deneyin";
+            }
+
+            // Final ekranını güncelle
+            document.getElementById('finalMessage').textContent = message;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalHealth').textContent = gameState.health;
+            document.getElementById('titleDisplay').textContent = title;
+        }
+    </script>
+</body>
+</html>
